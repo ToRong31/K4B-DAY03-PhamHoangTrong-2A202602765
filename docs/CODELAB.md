@@ -121,29 +121,43 @@ graph TD
 Mô hình LLM hiểu công cụ thông qua định dạng cấu trúc JSON Schema. Một Tool Schema chuẩn phải mô tả rõ tên công cụ (`name`), mục đích sử dụng (`description`) và các kiểu dữ liệu của tham số đầu vào (`parameters`).
 
 ### Thao tác thực hành:
-1. Mở tệp `src/tools.py`. Quan sát công cụ mẫu `academic_query` đã được định nghĩa sẵn.
-2. Tìm mốc `# TODO 1.2` và hoàn thiện khai báo JSON Schema cho công cụ:
-   - `schedule_appointment`: Công cụ đặt lịch hẹn (cần tham số `student_id`, `datetime_str`, `advisor_name`).
+1. Mở tệp `src/tools.py`. Hệ thống khai báo 4 công cụ chuẩn trong `TOOLS_SCHEMA`:
+   - `search_rental_rooms`: Tìm phòng trọ theo GPS trường tính động qua Haversine (`school_name`, `max_price`, `max_distance_km`, `amenities`).
+   - `get_property_ratings`: Lấy rating mô phỏng đã xác thực theo bất động sản (`room_id`).
+   - `get_nearby_bus_routes`: Lấy trạm dừng và các tuyến bus quanh phòng (`room_id`, `radius_m`).
+   - `book_room_viewing`: Đặt lịch xem phòng sau khi có ủy quyền (`room_id`, `student_id`, `viewing_time`, `student_phone`).
 
-**Cấu trúc Tool Schema mẫu tham khảo:**
+**Cấu trúc Tool Schema mẫu tham khảo (`search_rental_rooms`):**
 ```json
 {
-  "name": "academic_query",
-  "description": "Tra cứu hồ sơ và thông tin học vụ của sinh viên VinUni bằng mã sinh viên.",
+  "name": "search_rental_rooms",
+  "description": "Tra GPS trường từ fixture rồi tìm phòng trọ còn trống theo khoảng cách tính động.",
   "parameters": {
     "type": "object",
     "properties": {
-      "student_id": {
+      "school_name": {
         "type": "string",
-        "description": "Mã sinh viên cần tra cứu (ví dụ: 'SV2026001')"
+        "description": "Tên trường người dùng đang học; bỏ qua để dùng Trường mẫu."
+      },
+      "max_price": {
+        "type": "integer",
+        "description": "Giá tối đa VNĐ/tháng."
+      },
+      "max_distance_km": {
+        "type": "number",
+        "description": "Khoảng cách tối đa đến trường (km)."
+      },
+      "amenities": {
+        "type": "array",
+        "items": { "type": "string" }
       }
     },
-    "required": ["student_id"]
+    "additionalProperties": false
   }
 }
 ```
 
-- [x] Đã hoàn thiện khai báo đầy đủ các Tool Schemas trong danh sách `TOOLS_SCHEMA` tại `src/tools.py`.
+- [x] Đã hoàn thiện khai báo đầy đủ 4 Tool Schemas trong danh sách `TOOLS_SCHEMA` tại `src/tools.py`.
 
 ---
 
@@ -153,20 +167,28 @@ Mô hình LLM hiểu công cụ thông qua định dạng cấu trúc JSON Schem
 MCP là tiêu chuẩn mở kết nối giữa Agentic Systems và các nguồn dữ liệu/công cụ bên ngoài. Trong kiến trúc này, công cụ không nằm trong LLM mà được phục vụ độc lập từ MCP Server (`src/mcp_server.py`).
 
 ### Thao tác thực hành:
-1. Mở tệp `src/mcp_server.py` kiểm tra lớp `MCPAcademicServer`.
-2. Tìm mốc `# TODO 2.1` và hoàn thiện hàm `call_tool(self, tool_name, arguments)` nhận yêu cầu, gọi `dispatch_tool_call()` và đóng gói kết quả phản hồi chuẩn JSON-RPC 2.0.
+1. Mở tệp `src/mcp_server.py` kiểm tra lớp `MCPHousingServer` (kèm bí danh `MCPAcademicServer`).
+2. Hàm `call_tool(self, tool_name, arguments)` nhận yêu cầu, gọi `dispatch_tool_call()` và đóng gói kết quả phản hồi chuẩn JSON-RPC 2.0.
 3. Mở terminal và chạy lệnh kiểm tra MCP Server:
    ```bash
    python src/mcp_server.py
    ```
 
 ### 🚩 CHECKPOINT 2 (Mốc phút 70)
-- **Tín hiệu hoàn thành (Pass Signal):** Terminal in ra thông báo:
-  ```text
-  ✅ [MCP SERVER] Đã khởi tạo thành công vinuni-academic-mcp-server (Version: 2026.1.0)
-  📦 Số lượng Tools công bố qua MCP: 2
+- **Tín hiệu hoàn thành (Pass Signal):** Terminal in ra thông báo JSON-RPC hợp lệ:
+  ```json
+  {
+    "server": "student-housing-mcp-server",
+    "version": "1.0.0",
+    "tools": [
+      "search_rental_rooms",
+      "get_property_ratings",
+      "get_nearby_bus_routes",
+      "book_room_viewing"
+    ]
+  }
   ```
-- **Nếu bạn bị chậm:** Kiểm tra lại lỗi cú pháp trong `src/tools.py`. Nếu gặp `SyntaxError`, đối chiếu với Tool Schema mẫu `academic_query` để sửa các dấu ngoặc nhọn `{}`.
+- **Nếu bạn bị chậm:** Kiểm tra lại cú pháp trong `src/tools.py` và đảm bảo các file fixture trong `data/` hợp lệ.
 
 ---
 

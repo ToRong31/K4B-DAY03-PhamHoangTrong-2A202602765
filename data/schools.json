@@ -1,0 +1,145 @@
+{
+  "fixture_version": "fixture-v2",
+  "data_source": "fixture",
+  "default_school_id": "VINUNI",
+  "schools": [
+    {
+      "school_id": "VINUNI",
+      "name": "Trường Đại học VinUni (Gia Lâm, Hà Nội)",
+      "aliases": [
+        "VinUni",
+        "VinUniversity",
+        "Đại học VinUni",
+        "ĐH VinUni",
+        "ĐH Vin",
+        "dh Vin",
+        "Vin",
+        "Trường Vin",
+        "trường mẫu",
+        "Trường mẫu của bài lab",
+        "trường mẫu của bài lab",
+        "school demo",
+        "SCHOOL_DEMO"
+      ],
+      "lat": 10.0,
+      "lon": 106.0
+    },
+    {
+      "school_id": "HUST",
+      "name": "Đại học Bách khoa Hà Nội",
+      "aliases": [
+        "HUST",
+        "Bách Khoa Hà Nội",
+        "ĐH Bách Khoa Hà Nội",
+        "Đại học Bách Khoa Hà Nội",
+        "Bách Khoa",
+        "ĐH Bách Khoa",
+        "BK Hà Nội",
+        "BK HN",
+        "dh bach khoa",
+        "ABC",
+        "trường ABC",
+        "đại học ABC",
+        "SCHOOL_ABC",
+        "BKU",
+        "BK",
+        "HCMUT",
+        "ĐHBK",
+        "DHBK",
+        "Trường Bách Khoa",
+        "Bach Khoa",
+        "ĐHBK HN",
+        "ĐHBK HCM",
+        "BK TP.HCM",
+        "BK HCM",
+        "Bách Khoa University"
+      ],
+      "lat": 10.018,
+      "lon": 106.0
+    },
+    {
+      "school_id": "UIT",
+      "name": "Trường Đại học Công nghệ Thông tin (ĐHQG-HCM)",
+      "aliases": [
+        "UIT",
+        "ĐH CNTT",
+        "ĐH Công nghệ Thông tin",
+        "Đại học Công nghệ Thông tin",
+        "CNTT",
+        "dh cntt",
+        "dh cong nghe thong tin",
+        "Trường ĐH Công nghệ Thông tin",
+        "Trường Đại học CNTT",
+        "uit"
+      ],
+      "lat": 10.015,
+      "lon": 106.002
+    },
+    {
+      "school_id": "FPT",
+      "name": "Trường Đại học FPT",
+      "aliases": [
+        "FPT",
+        "ĐH FPT",
+        "Đại học FPT",
+        "Trường ĐH FPT",
+        "FPT University",
+        "FPTU",
+        "dh fpt"
+      ],
+      "lat": 10.02,
+      "lon": 106.003
+    },
+    {
+      "school_id": "NEU",
+      "name": "Trường Đại học Kinh tế Quốc dân",
+      "aliases": [
+        "NEU",
+        "Kinh tế Quốc dân",
+        "ĐH Kinh tế Quốc dân",
+        "Đại học Kinh tế Quốc dân",
+        "KTQD",
+        "dh kinh te quoc dan",
+        "XYZ",
+        "trường XYZ",
+        "đại học XYZ",
+        "SCHOOL_XYZ"
+      ],
+      "lat": 10.04,
+      "lon": 106.012
+    },
+    {
+      "school_id": "FTU",
+      "name": "Trường Đại học Ngoại thương Hà Nội",
+      "aliases": [
+        "FTU",
+        "Ngoại Thương",
+        "ĐH Ngoại Thương",
+        "Đại học Ngoại Thương",
+        "Ngoại Thương Hà Nội",
+        "dh ngoai thuong"
+      ],
+      "lat": 10.025,
+      "lon": 106.005
+    },
+    {
+      "school_id": "VNU",
+      "name": "Đại học Quốc gia Hà Nội",
+      "aliases": [
+        "VNU",
+        "ĐHQGHN",
+        "ĐHQG Hà Nội",
+        "Đại học Quốc gia Hà Nội",
+        "ĐH Quốc gia Hà Nội",
+        "VNU HN",
+        "dh quoc gia ha noi",
+        "ĐHQG",
+        "ĐHQG-HCM",
+        "VNU-HCM",
+        "Đại học Quốc gia"
+      ],
+      "lat": 10.035,
+      "lon": 106.008
+    }
+  ]
+}

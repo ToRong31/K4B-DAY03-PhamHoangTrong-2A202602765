@@ -1,0 +1,37 @@
+[
+  {
+    "id": "TC01",
+    "type": "direct_query",
+    "question": "Sinh viên năm nhất đi thuê phòng trọ gần trường cần lưu ý những khoản chi phí phát sinh và những thông tin nào trong thỏa thuận đặt cọc?",
+    "expected_behavior": "Agent trả lời trực tiếp các lưu ý chung về tiền điện, nước, internet, gửi xe, phí dịch vụ và nội dung thỏa thuận đặt cọc; không gọi Tool và không khẳng định giá hay tình trạng của phòng cụ thể.",
+    "complexity": "Low"
+  },
+  {
+    "id": "TC02",
+    "type": "two_step_query",
+    "question": "Tôi học Trường mẫu của bài lab, tìm giúp tôi các phòng trọ còn trống có giá không quá 3,5 triệu đồng/tháng và cách trường không quá 3 km.",
+    "expected_behavior": "Agent gọi get_school_coordinates với school_name='Trường mẫu của bài lab' để lấy tọa độ GPS (lat=10.0, lon=106.0), sau đó gọi search_rental_rooms với lat, lon, max_price=3500000, max_distance_km=3; trình bày các phòng phù hợp từ kết quả trả về và không gọi công cụ đặt lịch.",
+    "complexity": "Medium"
+  },
+  {
+    "id": "TC03",
+    "type": "appointment_booking",
+    "question": "Tôi muốn đặt lịch xem phòng mã P101 vào lúc 09:30 ngày 18/09/2026 theo giờ Việt Nam, mã sinh viên của tôi là SV2026001, số điện thoại: 0912345678.",
+    "expected_behavior": "Agent gọi book_room_viewing với room_id='P101', student_id='SV2026001', viewing_time='2026-09-18T09:30:00+07:00', student_phone='0912345678'. Công cụ kiểm tra phòng và lịch hẹn; Agent chỉ xác nhận đặt lịch thành công khi công cụ trả về thành công, nếu thất bại thì thông báo đúng nguyên nhân.",
+    "complexity": "Medium"
+  },
+  {
+    "id": "TC04",
+    "type": "multi_step_reasoning",
+    "question": "Tôi là sinh viên SV2026001, học Trường mẫu của bài lab, số điện thoại 0912345678. Hãy tìm phòng trọ còn trống có điều hòa, giá không quá 4 triệu đồng/tháng và cách trường không quá 3 km. Phòng phải có rating từ 4/5 với ít nhất 20 lượt đánh giá và có tuyến bus tại trạm trong 500 m. Trong các phòng đạt đủ điều kiện, chọn phòng gần trường nhất; nếu bằng khoảng cách thì chọn phòng rẻ hơn, nếu vẫn bằng nhau thì chọn mã phòng nhỏ nhất. Sau đó đặt lịch xem phòng đó vào 15:00 ngày 16/09/2026 theo giờ Việt Nam.",
+    "expected_behavior": "Agent gọi get_school_coordinates với school_name='Trường mẫu của bài lab' lấy tọa độ GPS, sau đó thực hiện search_rental_rooms với lat, lon, max_price=4000000, max_distance_km=3, amenities=['air_conditioning']. Agent lấy rating và bus cho shortlist từ observation, loại P102 vì rating dưới 4/5, chọn P103 từ dữ liệu thực tế rồi mới gọi book_room_viewing. Chỉ báo thành công khi booking tool trả SUCCESS; final có evidence search, rating, bus và booking.",
+    "complexity": "High"
+  },
+  {
+    "id": "TC05",
+    "type": "edge_case_handling",
+    "question": "Tôi học Trường mẫu của bài lab, tìm giúp tôi phòng trọ còn trống có giá không quá 500 nghìn đồng/tháng và cách trường không quá 100 mét.",
+    "expected_behavior": "Với bộ dữ liệu thử nghiệm không có phòng thỏa điều kiện này, Agent gọi get_school_coordinates với school_name='Trường mẫu của bài lab' lấy tọa độ GPS, sau đó gọi search_rental_rooms với lat, lon, max_price=500000, max_distance_km=0.1 và nhận danh sách rỗng. Agent thông báo không tìm thấy phòng phù hợp, gợi ý người dùng tăng ngân sách hoặc mở rộng khoảng cách; không bịa phòng hay mức giá thị trường, không tự nới tiêu chí và không gọi book_room_viewing.",
+    "complexity": "Medium"
+  }
+]

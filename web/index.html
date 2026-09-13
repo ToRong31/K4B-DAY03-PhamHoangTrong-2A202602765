@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Student Housing ReAct Agent - Trợ lý Tìm Phòng Trọ Sinh Viên</title>
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono for a clean, modern aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo" aria-hidden="true">
+        <svg class="h-6 w-6 text-primary-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title-wrap">
+          <h1 class="brand-title">Student Housing ReAct</h1>
+          <span class="badge badge-accent">Agent Studio</span>
+        </div>
+        <p class="brand-subtitle">Trợ lý tìm kiếm, đối chiếu rating &amp; bus, hỗ trợ đặt phòng sinh viên</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="status-tags" id="header-status-tags">
+        <span class="badge badge-simulated" id="badge-data-mode" title="Nguồn dữ liệu">
+          <span class="status-dot dot-sky"></span>
+          <span>Dữ liệu mô phỏng</span>
+        </span>
+        <span class="badge badge-neutral" id="badge-llm-mode" title="Chế độ mô hình" role="status" aria-atomic="true">
+          <span class="status-dot dot-gray"></span>
+          <span>LLM: Chưa xác định</span>
+        </span>
+        <span class="badge badge-info" id="badge-conn-mode" title="Trạng thái kết nối">
+          <span class="status-dot dot-blue"></span>
+          <span>Chế độ: Đang tải...</span>
+        </span>
+      </div>
+
+      <div class="session-box" id="session-box">
+        <span class="session-label">Session:</span>
+        <code class="session-code" id="session-id-display">Chưa có</code>
+        <button type="button" class="btn btn-xs btn-outline" id="btn-reset-session" title="Làm mới phiên làm việc">
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          <span>Tạo mới</span>
+        </button>
+      </div>
+
+      <a href="presentation.html" target="_blank" class="btn btn-xs btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Mở Slide Thuyết Trình Bài Lab">
+        <span>📊 Slide Thuyết Trình</span>
+      </a>
+
+      <!-- Theme Mode Toggle Button (Light/Dark) -->
+      <button type="button" class="theme-toggle-btn" id="btn-theme-toggle" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Toggle theme">
+        <svg class="icon-theme icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg class="icon-theme icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+
+      <!-- Toggle Timeline Trace Sidebar Button (Ctrl+B) -->
+      <button type="button" class="sidebar-toggle-btn active" id="btn-toggle-sidebar" title="Toggle Sidebar (Ctrl+B)" aria-label="Toggle Sidebar (Ctrl+B)">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2"/>
+          <path d="M15 3v18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Demo Mode Banner (Hiển thị khi ở chế độ Demo ?demo=1) -->
+  <aside class="demo-banner" id="demo-banner" aria-label="Demo Banner" hidden>
+    <div class="demo-banner-content">
+      <div class="demo-banner-info">
+        <div class="demo-banner-badge">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>DEMO MODE</span>
+        </div>
+        <div>
+          <strong class="demo-title">Chế độ Demo Fixture (Kiểm thử độc lập không cần Backend)</strong>
+          <span class="demo-desc">Kiểm thử toàn diện 7 kịch bản chuẩn hợp đồng ReAct Agent</span>
+        </div>
+      </div>
+      <div class="demo-controls">
+        <label for="demo-scenario-select" class="sr-only">Chọn kịch bản demo</label>
+        <select id="demo-scenario-select" class="select select-sm select-dark">
+          <option value="TC04">TC04: Tìm phòng, Rating, Bus &amp; Đặt lịch thành công</option>
+          <option value="TC02">TC02: Tìm phòng theo giá &amp; khoảng cách (Không book)</option>
+          <option value="TC05">TC05: Kết quả rỗng (500k, 100m)</option>
+          <option value="TC07_08">TC07/08: Rating chưa xác định &amp; Bus unsupported</option>
+          <option value="GT01">G-T01: Thiếu thông tin đặt lịch (NEEDS_INPUT)</option>
+          <option value="GT02">G-T02: Chặn đặt lịch ngoài quyền (Guardrail G03 Block)</option>
+          <option value="API_ERR">API-ERR: Mô phỏng lỗi máy chủ (Sanitized Error)</option>
+        </select>
+        <div class="demo-speed-toggle">
+          <label class="toggle-label" title="Xem theo nhịp bước để quan sát timeline hoặc xem ngay lập tức">
+            <input type="checkbox" id="demo-step-by-step" checked>
+            <span>Từng bước (~1s)</span>
+          </label>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary-gradient" id="btn-run-demo">
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Chạy Demo</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-glass" id="btn-exit-demo" title="Chuyển về chế độ kết nối Backend">Thoát Demo</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile View Switcher Tabs (< 960px) -->
+  <nav class="mobile-tabs" id="mobile-tabs" aria-label="Chuyển đổi giao diện">
+    <button type="button" class="mobile-tab active" data-target="panel-chat">
+      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Hội thoại &amp; Kết quả</span>
+    </button>
+    <button type="button" class="mobile-tab" data-target="panel-trace">
+      <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Timeline Trace (<span id="trace-step-counter">0</span>)</span>
+    </button>
+  </nav>
+
+  <!-- Two Column Main Container -->
+  <main class="main-container">
+    <!-- CỘT TRÁI: Hội thoại & Kết quả -->
+    <section class="panel panel-left active" id="panel-chat">
+      <div class="panel-header">
+        <div class="panel-header-title-group">
+          <svg class="icon-sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h2 class="panel-title">Tư Vấn &amp; Kết Quả Tìm Phòng</h2>
+        </div>
+        <div class="panel-header-actions">
+          <button type="button" class="btn btn-xs btn-outline open-sidebar-pill" id="btn-open-sidebar" title="Mở Timeline Trace (Ctrl+B)">
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></svg>
+            <span>Mở Timeline Trace (Ctrl+B)</span>
+          </button>
+          <span class="simulated-indicator badge badge-simulated">
+            <span class="status-dot dot-sky"></span>
+            <span>Dữ liệu mô phỏng</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Prompt Suggestion Chips -->
+      <div class="prompt-suggestions">
+        <div class="suggestions-header">
+          <svg class="icon-xs text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span class="suggestions-label">Gợi ý câu hỏi mẫu:</span>
+        </div>
+        <div class="chips-container" id="prompt-chips">
+          <button type="button" class="chip" data-query="Sinh viên năm nhất đi thuê phòng trọ gần trường cần lưu ý những khoản chi phí phát sinh và những thông tin nào trong thỏa thuận đặt cọc?">
+            <span>TC01: Chi phí &amp; cọc</span>
+          </button>
+          <button type="button" class="chip" data-query="Tôi học Trường mẫu của bài lab, tìm giúp tôi các phòng trọ còn trống có giá không quá 3,5 triệu đồng/tháng và cách trường không quá 3 km.">
+            <span>TC02: Tìm phòng ≤ 3.5tr, ≤ 3km</span>
+          </button>
+          <button type="button" class="chip" data-query="Tôi muốn đặt lịch xem phòng mã P101 vào lúc 09:30 ngày 18/09/2026 theo giờ Việt Nam, mã sinh viên SV2026001, số điện thoại: 0912345678.">
+            <span>TC03: Đặt lịch P101</span>
+          </button>
+          <button type="button" class="chip chip-highlight" data-query="Tôi là sinh viên SV2026001, học Trường mẫu của bài lab, số điện thoại 0912345678. Hãy tìm phòng trọ còn trống có điều hòa, giá không quá 4 triệu đồng/tháng và cách trường không quá 3 km. Phòng phải có rating từ 4/5 với ít nhất 20 lượt đánh giá và có tuyến bus tại trạm trong 500 m. Trong các phòng đạt đủ điều kiện, chọn phòng gần trường nhất; nếu bằng khoảng cách thì chọn phòng rẻ hơn, nếu vẫn bằng nhau thì chọn mã phòng nhỏ nhất. Sau đó đặt lịch xem phòng đó vào 15:00 ngày 16/09/2026 theo giờ Việt Nam.">
+            <span>⭐ TC04: Đa bước (Rating, Bus &amp; Đặt lịch)</span>
+          </button>
+          <button type="button" class="chip" data-query="Tôi học Trường mẫu của bài lab, tìm giúp tôi phòng trọ còn trống có giá không quá 500 nghìn đồng/tháng và cách trường không quá 100 mét.">
+            <span>TC05: 500k, 100m (Kết quả rỗng)</span>
+          </button>
+          <button type="button" class="chip" data-query="Tôi là sinh viên SV2026001, số điện thoại 0912345678. Hãy tìm phòng trọ còn trống có điều hòa, giá không quá 4 triệu đồng/tháng và cách trường không quá 3 km. Chọn phòng gần trường nhất, sau đó đặt lịch xem phòng đó vào 15:00 ngày 16/09/2026 theo giờ Việt Nam.">
+            <span>💬 Chưa có tên trường (Agent hỏi lại)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages & Results Container -->
+      <div class="chat-viewport" id="chat-viewport">
+        <!-- Welcome card with Bento-style features -->
+        <div class="welcome-card" id="welcome-card">
+          <div class="welcome-badge">
+            <svg class="icon-sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>HỆ THỐNG REACT AGENT BẢO VỆ GUARDRAIL</span>
+          </div>
+          <h3>Chào mừng đến với Trợ lý Tìm Phòng Trọ Sinh Viên</h3>
+          <p>Hệ thống hỗ trợ tìm kiếm phòng trọ thông minh, đối chiếu rating và tuyến xe bus, so sánh đa tiêu chí và hỗ trợ đặt lịch xem phòng an toàn.</p>
+          
+          <div class="welcome-features">
+            <div class="feat-item">
+              <div class="feat-icon-box bg-blue-subtle">
+                <svg class="icon-sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <div>
+                <strong>Lọc phòng chính xác:</strong>
+                <p>Kiểm tra giá thuê, khoảng cách đến trường và tiện ích điều hòa/wifi</p>
+              </div>
+            </div>
+            <div class="feat-item">
+              <div class="feat-icon-box bg-amber-subtle">
+                <svg class="icon-sm text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div>
+                <strong>Đánh giá (Rating):</strong>
+                <p>Xác minh số lượng đánh giá, thang điểm và nguồn gốc dữ liệu</p>
+              </div>
+            </div>
+            <div class="feat-item">
+              <div class="feat-icon-box bg-emerald-subtle">
+                <svg class="icon-sm text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 11h16"/><path d="M8 4v7"/><path d="M16 4v7"/><path d="M6 18h.01"/><path d="M18 18h.01"/></svg>
+              </div>
+              <div>
+                <strong>Giao thông xe Bus:</strong>
+                <p>Kiểm tra cự ly trạm (chim bay/đi bộ), độ phủ và danh sách tuyến qua trạm</p>
+              </div>
+            </div>
+            <div class="feat-item">
+              <div class="feat-icon-box bg-purple-subtle">
+                <svg class="icon-sm text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <strong>Guardrail an toàn:</strong>
+                <p>Kiểm soát quyền đặt lịch, ngăn ngừa trùng slot, che giấu dữ liệu PII</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic chat history cards will be injected here -->
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <!-- Comparison Cards / Table Container -->
+        <section class="results-section" id="results-section" hidden>
+          <div class="results-header">
+            <div>
+              <h3 class="results-title">Bảng So Sánh Phòng Trọ Phù Hợp</h3>
+              <p class="results-subtitle">Dữ liệu được đối chiếu đa nguồn và trích xuất từ các quan sát đã xác minh</p>
+            </div>
+            <div class="results-actions">
+              <span class="badge badge-simulated">
+                <span class="status-dot dot-sky"></span>
+                <span>Dữ liệu mô phỏng</span>
+              </span>
+              <button type="button" class="btn btn-xs btn-outline" id="btn-toggle-view-mode">
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                <span>Xem dạng bảng</span>
+              </button>
+            </div>
+          </div>
+          <div class="room-cards-grid" id="room-cards-container"></div>
+          <div class="room-table-container" id="room-table-container" hidden></div>
+        </section>
+
+        <!-- Booking Confirmation Section (chỉ hiện khi booking CONFIRMED) -->
+        <section class="booking-section" id="booking-section" hidden>
+          <div class="booking-card" id="booking-card">
+            <!-- Rendered safely in app.js -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Input Area & Controls -->
+      <div class="chat-input-area">
+        <!-- Multi-turn Needs Input Alert Banner (nếu trạng thái là NEEDS_INPUT) -->
+        <div class="needs-input-banner" id="needs-input-banner" hidden>
+          <div class="ni-icon-wrap">
+            <svg class="icon-sm text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="ni-text" id="needs-input-message">Agent cần thêm thông tin để tiếp tục xử lý cùng phiên làm việc này.</div>
+        </div>
+
+        <!-- Network / Post warning banner -->
+        <div class="alert-banner alert-warning" id="post-error-banner" hidden>
+          <div class="alert-content-wrap">
+            <svg class="icon-sm text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="alert-text" id="post-error-message"></div>
+          </div>
+          <button type="button" class="btn btn-xs btn-secondary" id="btn-dismiss-post-error">Đóng</button>
+        </div>
+
+        <form class="input-form" id="chat-form">
+          <label for="chat-input" class="sr-only">Yêu cầu tìm phòng hoặc đặt lịch</label>
+          <div class="textarea-wrapper">
+            <textarea
+              id="chat-input"
+              class="input-textarea"
+              rows="1"
+              maxlength="8000"
+              placeholder="Nhập yêu cầu tìm phòng (Ví dụ: Tìm phòng có điều hòa dưới 4 triệu, cách trường trong 3km, có bus và rating tốt...)"
+              required
+            ></textarea>
+          </div>
+          
+          <div class="form-bottom-row">
+            <div class="input-meta">
+              <span class="char-count" id="char-count">0 / 8000</span>
+              <span class="typing-indicator" id="typing-indicator" hidden>
+                <span class="pulse-dot"></span>
+                <span>Đang xử lý chu trình ReAct...</span>
+              </span>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline btn-icon-only" id="btn-clear-input" title="Xóa nội dung ô nhập">
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span class="sr-only">Xóa</span>
+              </button>
+              <button type="submit" class="btn btn-primary" id="btn-submit-chat">
+                <span class="btn-text">Gửi yêu cầu</span>
+                <svg class="icon-xs btn-icon-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span class="spinner" id="submit-spinner" hidden></span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- CỘT PHẢI: Timeline Trace ReAct -->
+    <section class="panel panel-right" id="panel-trace">
+      <div class="panel-header trace-panel-header">
+        <div class="panel-header-title-group">
+          <svg class="icon-sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <div>
+            <h2 class="panel-title">Timeline Trace ReAct</h2>
+            <p class="panel-subtitle">Quan sát từng bước suy luận, tool calling và kiểm soát Guardrail</p>
+          </div>
+        </div>
+        <div class="trace-status-box" id="trace-status-box">
+          <span class="status-pill status-idle" id="trace-status-pill">IDLE</span>
+          <button type="button" class="btn-close-trace" id="btn-close-trace" title="Thu gọn Timeline Trace (Ctrl+B)" aria-label="Collapse Sidebar">
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Trace Meta Summary Bar -->
+      <div class="trace-meta-bar" id="trace-meta-bar">
+        <div class="meta-item">
+          <span class="meta-label">Run ID:</span>
+          <code class="meta-val" id="meta-run-id">--</code>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Số bước:</span>
+          <span class="meta-val" id="meta-steps-count">0</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Thời gian thực:</span>
+          <span class="meta-val" id="meta-total-duration">--</span>
+        </div>
+      </div>
+
+      <!-- Trace Controls: Expand/Collapse All & Filter -->
+      <div class="trace-controls-bar">
+        <div class="trace-filter-group">
+          <label for="trace-filter" class="sr-only">Lọc loại sự kiện</label>
+          <select id="trace-filter" class="select select-xs">
+            <option value="ALL">Tất cả sự kiện</option>
+            <option value="MODEL_DECISION">Tóm tắt quyết định</option>
+            <option value="TOOL">Gọi công cụ (Tool)</option>
+            <option value="GUARDRAIL_CHECK">Kiểm tra Guardrail</option>
+            <option value="FINAL_ANSWER">Câu trả lời cuối</option>
+          </select>
+        </div>
+        <div class="trace-toggle-buttons">
+          <button type="button" class="btn btn-xs btn-outline" id="btn-expand-all-trace">Mở tất cả</button>
+          <button type="button" class="btn btn-xs btn-outline" id="btn-collapse-all-trace">Thu gọn</button>
+          <button type="button" class="btn btn-xs btn-outline" id="btn-clear-trace">Làm sạch</button>
+        </div>
+      </div>
+
+      <!-- Trace Timeline Events List Container -->
+      <div class="trace-viewport" id="trace-viewport">
+        <div class="trace-empty-state" id="trace-empty-state">
+          <div class="trace-empty-icon-box">
+            <svg class="icon-lg text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <p>Chưa có lượt chạy (Run) nào.</p>
+          <small>Gửi yêu cầu hoặc bấm "Chạy Demo" để xem chuỗi sự kiện ReAct (Quyết định, Tool, Guardrail, Quan sát, Final).</small>
+        </div>
+        <ol class="trace-timeline-list" id="trace-events-list"></ol>
+      </div>
+    </section>
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- JavaScript Entry Point -->
+  <script src="app.js"></script>
+</body>
+</html>

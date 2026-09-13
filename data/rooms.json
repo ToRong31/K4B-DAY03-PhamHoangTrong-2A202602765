@@ -1,0 +1,126 @@
+{
+  "fixture_version": "fixture-v2",
+  "data_source": "fixture",
+  "rooms": [
+    {
+      "room_id": "P101",
+      "property_id": "PROP-101",
+      "name": "Phòng An Cư 101",
+      "price_vnd": 3000000,
+      "lat": 10.013475,
+      "lon": 106.0,
+      "amenities": ["parking", "private_bathroom"],
+      "available": true
+    },
+    {
+      "room_id": "P102",
+      "property_id": "PROP-102",
+      "name": "Phòng Ban Mai 102",
+      "price_vnd": 3800000,
+      "lat": 10.007187,
+      "lon": 106.0,
+      "amenities": ["air_conditioning", "parking"],
+      "available": true
+    },
+    {
+      "room_id": "P103",
+      "property_id": "PROP-103",
+      "name": "Phòng Cầu Vồng 103",
+      "price_vnd": 3500000,
+      "lat": 10.017966,
+      "lon": 106.0,
+      "amenities": ["air_conditioning", "loft"],
+      "available": true
+    },
+    {
+      "room_id": "P104",
+      "property_id": "PROP-104",
+      "name": "Phòng Dốc Nắng 104",
+      "price_vnd": 4200000,
+      "lat": 10.004492,
+      "lon": 106.0,
+      "amenities": ["air_conditioning"],
+      "available": true
+    },
+    {
+      "room_id": "P105",
+      "property_id": "PROP-105",
+      "name": "Phòng Êm Đềm 105",
+      "price_vnd": 2800000,
+      "lat": 10.006288,
+      "lon": 106.0,
+      "amenities": ["air_conditioning"],
+      "available": false
+    },
+    {
+      "room_id": "P106",
+      "property_id": "PROP-106",
+      "name": "Phòng Gió Mát 106",
+      "price_vnd": 3200000,
+      "lat": 10.037728,
+      "lon": 106.0,
+      "amenities": ["parking", "flexible_hours"],
+      "available": true
+    },
+    {
+      "room_id": "P107",
+      "property_id": "PROP-107",
+      "name": "Phòng Hoa Nắng 107",
+      "price_vnd": 3700000,
+      "lat": 10.01078,
+      "lon": 106.0,
+      "amenities": ["private_bathroom", "parking"],
+      "available": true
+    },
+    {
+      "room_id": "P108",
+      "property_id": "PROP-108",
+      "name": "Phòng Ích An 108",
+      "price_vnd": 4800000,
+      "lat": 10.00539,
+      "lon": 106.0,
+      "amenities": ["air_conditioning", "private_bathroom", "parking"],
+      "available": true
+    },
+    {
+      "room_id": "P109",
+      "property_id": "PROP-109",
+      "name": "Phòng Ký Ức 109",
+      "price_vnd": 3400000,
+      "lat": 10.02246,
+      "lon": 106.0,
+      "amenities": ["air_conditioning", "private_bathroom"],
+      "available": false
+    },
+    {
+      "room_id": "P110",
+      "property_id": "PROP-110",
+      "name": "Phòng Lam Chiều 110",
+      "price_vnd": 2900000,
+      "lat": 10.034135,
+      "lon": 106.0,
+      "amenities": ["loft", "flexible_hours"],
+      "available": true
+    },
+    {
+      "room_id": "P111",
+      "property_id": "PROP-111",
+      "name": "Phòng Mộc Miên 111",
+      "price_vnd": 3600000,
+      "lat": 10.025152,
+      "lon": 106.0,
+      "amenities": ["air_conditioning", "parking", "flexible_hours"],
+      "available": true
+    },
+    {
+      "room_id": "P112",
+      "property_id": "PROP-112",
+      "name": "Phòng Nắng Mới 112",
+      "price_vnd": 3300000,
+      "lat": 10.028746,
+      "lon": 106.0,
+      "amenities": ["parking", "private_bathroom", "flexible_hours"],
+      "available": true
+    }
+  ]
+}

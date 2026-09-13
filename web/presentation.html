@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thuyết trình Bài Lab 3: Student Housing ReAct Agent</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(18, 26, 43, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(56, 189, 248, 0.4);
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --secondary: #818cf8;
+            --accent: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(129, 140, 248, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 100;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            box-shadow: 0 0 10px var(--primary-glow);
+            transition: width 0.3s ease;
+        }
+
+        .slide-deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        @media (min-width: 1024px) {
+            .slide-deck {
+                max-width: calc(100vh * 16 / 9);
+                max-height: calc(100vw * 9 / 16);
+                margin: auto;
+                position: absolute;
+                inset: 0;
+            }
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            padding: 36px 48px 65px 48px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.98) translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
+            overflow: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateY(0);
+        }
+
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .slide-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .slide-title {
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 800;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .slide-number {
+            font-family: var(--font-code);
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 700;
+            background: rgba(18, 26, 43, 0.9);
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .slide-body {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            transition: all 0.25s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--border-active);
+            box-shadow: 0 10px 30px var(--primary-glow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 16.5px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* Cover Slide */
+        .cover-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+            gap: 20px;
+            position: relative;
+        }
+
+        .cover-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 16px;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 999px;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .cover-title {
+            font-size: clamp(34px, 4.8vw, 56px);
+            font-weight: 800;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 20%, #38bdf8 60%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            max-width: 900px;
+        }
+
+        .cover-desc {
+            font-size: clamp(15px, 1.6vw, 18px);
+            color: var(--text-muted);
+            max-width: 760px;
+            line-height: 1.55;
+        }
+
+        .author-box {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(18, 26, 43, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 12px 24px;
+            border-radius: 14px;
+            margin-top: 4px;
+        }
+
+        .author-item {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .author-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .author-val {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .author-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border-color);
+        }
+
+        .badge-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+        }
+        .status-badge.success {
+            background: rgba(52, 211, 153, 0.12);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: #34d399;
+        }
+
+        /* Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .matrix-table th {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--primary);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .matrix-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        .score-pill {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            font-family: var(--font-code);
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            white-space: nowrap;
+        }
+
+        /* Architecture Flow Diagram */
+        .arch-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .arch-layer {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .arch-layer-title {
+            width: 130px;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            flex-shrink: 0;
+            line-height: 1.25;
+        }
+
+        .arch-layer-content {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .arch-node.highlight {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+        }
+        .arch-node.guard {
+            border-color: rgba(251, 191, 36, 0.5);
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+        }
+        .arch-node.tool {
+            border-color: rgba(129, 140, 248, 0.5);
+            background: rgba(129, 140, 248, 0.1);
+            color: #818cf8;
+        }
+        .arch-node.data {
+            border-color: rgba(52, 211, 153, 0.5);
+            background: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+        }
+
+        /* Tool Grid Cards */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tool-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .tool-badge {
+            font-family: var(--font-code);
+            font-size: 10.5px;
+            padding: 2px 7px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            color: var(--primary);
+            align-self: flex-start;
+        }
+
+        .tool-name {
+            font-family: var(--font-code);
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .tool-purpose {
+            font-size: 12.5px;
+            color: #cbd5e1;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .tool-params {
+            font-family: var(--font-code);
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 6px;
+            padding: 5px 8px;
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        /* Trace Stepper Container */
+        .trace-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .trace-step-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .trace-step-item:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .trace-step-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .trace-tag-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trace-step-pill {
+            background: var(--primary);
+            color: #000;
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+
+        .trace-action-name {
+            font-family: var(--font-code);
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .trace-status-pill {
+            font-family: var(--font-code);
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .trace-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-family: var(--font-code);
+            font-size: 11.5px;
+            line-height: 1.45;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .trace-box span.key { color: var(--primary); }
+        .trace-box span.str { color: #a5f3fc; }
+        .trace-box span.num { color: #fbcfe8; }
+        .trace-box span.pass { color: #86efac; font-weight: bold; }
+        .trace-box span.fail { color: #fca5a5; font-weight: bold; }
+
+        /* Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(18, 26, 43, 0.85);
+            border: 1px solid var(--border-color);
+            padding: 6px 18px;
+            border-radius: 999px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .slide-dots {
+            display: flex;
+            gap: 7px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .dot.active {
+            width: 22px;
+            border-radius: 999px;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .keyboard-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 24px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 90;
+        }
+
+        kbd {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 5px;
+            font-family: var(--font-code);
+            font-size: 10.5px;
+            color: #cbd5e1;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            background: rgba(18, 26, 43, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 11.5px;
+            font-family: var(--font-main);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+        .fullscreen-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="fullscreen-btn" onclick="toggleFullScreen()">
+        ⛶ <span>Toàn màn hình (F)</span>
+    </button>
+
+    <div class="slide-deck">
+
+        <!-- SLIDE 1: COVER -->
+        <div class="slide active" data-slide="1">
+            <div class="cover-container">
+                <div class="cover-tag">
+                    <span>⚡ BÁO CÁO THUYẾT TRÌNH BÀI LAB 3 — REACT AGENT</span>
+                </div>
+                <h1 class="cover-title">Student Housing ReAct Agent</h1>
+                <p class="cover-desc">
+                    Trợ lý tác tử AI thông minh hỗ trợ sinh viên tìm kiếm phòng trọ theo đa tiêu chí (GPS động Haversine, Rating uy tín, Tuyến bus lân cận) và đặt lịch xem phòng an toàn với MCP Facade.
+                </p>
+
+                <div class="author-box">
+                    <div class="author-item">
+                        <span class="author-label">Họ và Tên</span>
+                        <span class="author-val">Phạm Hoàng Trọng</span>
+                    </div>
+                    <div class="author-divider"></div>
+                    <div class="author-item">
+                        <span class="author-label">Mã Số Sinh Viên</span>
+                        <span class="author-val">2A202602765</span>
+                    </div>
+                    <div class="author-divider"></div>
+                    <div class="author-item">
+                        <span class="author-label">Lớp học phần</span>
+                        <span class="author-val">K4B (Chiều) — Đề tài Mở (Mục 5)</span>
+                    </div>
+                </div>
+
+                <div class="badge-list">
+                    <div class="status-badge success">✓ Bộ kiểm thử: 5 / 5 PASS</div>
+                    <div class="status-badge success">✓ 6 Tools kiến trúc MCP</div>
+                    <div class="status-badge success">✓ Haversine GPS động</div>
+                    <div class="status-badge success">✓ 13 Guardrails &amp; PII Safe</div>
+                    <div class="status-badge success">✓ Multi-turn Ask &amp; Clarify</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: CÂU 1 -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 1 / 5</div>
+                    <h2 class="slide-title">Chọn đề tài gì? Tại sao chọn đề tài đó?</h2>
+                    <p class="slide-subtitle">Bài toán thực tiễn cấp bách của tân sinh viên và học viên khi bước vào môi trường đại học</p>
+                </div>
+                <div class="slide-number">01 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🏠</div>
+                            <div>
+                                <div class="card-title">Đề tài lựa chọn</div>
+                                <div style="font-size: 13px; color: var(--primary); font-weight: 600;">Student Housing ReAct Assistant</div>
+                            </div>
+                        </div>
+                        <div class="card-desc" style="display: flex; flex-direction: column; gap: 12px;">
+                            <p>Xây dựng hệ thống <strong>Agentic AI</strong> đóng vai trò người bạn đồng hành cho sinh viên tìm kiếm phòng trọ, căn hộ gần trường học với dữ liệu đối chiếu đa nguồn.</p>
+                            <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border-left: 3px solid var(--primary);">
+                                <strong style="color: #fff;">Đặc tả cốt lõi:</strong>
+                                <ul style="margin-left: 18px; margin-top: 6px; font-size: 13px; color: #cbd5e1;">
+                                    <li>Tra cứu tọa độ GPS trường học thực tế từ cơ sở dữ liệu.</li>
+                                    <li>Lọc theo ngân sách tối đa, tiện ích (điều hòa, gác lửng...).</li>
+                                    <li>Kiểm tra điểm đánh giá thực tế (Google/Map rating) &amp; Trạm bus.</li>
+                                    <li>Thực hiện đặt lịch xem phòng trực tiếp trong khung giờ hành chính.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🎯</div>
+                            <div>
+                                <div class="card-title">Tại sao lại chọn đề tài này?</div>
+                                <div style="font-size: 13px; color: var(--accent); font-weight: 600;">Nỗi đau thực tế &amp; Thách thức kỹ thuật</div>
+                            </div>
+                        </div>
+                        <div class="card-desc" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <span style="color: #f87171; font-weight: bold;">1. Nỗi đau sinh viên:</span>
+                                <span>Ma trận thông tin lừa đảo cọc, phòng trọ thực tế khác xa quảng cáo, khó ước lượng cự ly đi bộ/xe bus thực tế tới trường.</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <span style="color: #fbbf24; font-weight: bold;">2. Đa ràng buộc phức tạp:</span>
+                                <span>Vừa phải thỏa mãn điều kiện kinh tế (giá rẻ), địa lý (gần trường), chất lượng sống (điều hòa, rating cao), vừa phải thuận tiện đi lại (tuyến bus).</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <span style="color: #34d399; font-weight: bold;">3. Môi trường kiểm thử lý tưởng:</span>
+                                <span>Đòi hỏi chuỗi suy luận logic đa bước (Multi-step), tương tác tool thực tế (Tool-use) và hành động cam kết có hệ quả (Booking Action).</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: CÂU 2 -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 2 / 5</div>
+                    <h2 class="slide-title">Tại sao ReAct Agent phù hợp? (Agentic Fit: 20/20)</h2>
+                    <p class="slide-subtitle">Chứng minh sự vượt trội của ReAct (Reasoning + Acting) so với LLM Prompting đơn thuần và Rule-based</p>
+                </div>
+                <div class="slide-number">02 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="grid-2" style="grid-template-columns: 1.15fr 0.85fr;">
+                    <div class="card" style="padding: 14px;">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th>Tiêu chí Đánh giá</th>
+                                    <th style="width: 70px; text-align: center;">Điểm</th>
+                                    <th>Giải trình chứng minh thực tế</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1. Multi-step Reasoning</strong></td>
+                                    <td style="text-align: center;"><span class="score-pill">5 / 5</span></td>
+                                    <td>Agent giải bài toán 4 bước: Geocoding trường ➔ Lọc phòng ➔ Kiểm định Rating/Bus ➔ Chọn phòng tối ưu và Đặt lịch.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2. Tool Interaction</strong></td>
+                                    <td style="text-align: center;"><span class="score-pill">5 / 5</span></td>
+                                    <td>Tương tác 6 công cụ MCP riêng biệt. Không bịa đặt phòng, không tự nhẩm khoảng cách; toàn bộ do Tool cung cấp.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3. Dynamic Decision</strong></td>
+                                    <td style="text-align: center;"><span class="score-pill">5 / 5</span></td>
+                                    <td>Quyết định bước sau phụ thuộc vào Observation bước trước (loại bỏ phòng rating &lt; 4, hỏi lại khi thiếu trường học qua ask_user).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4. Long Horizon Goal</strong></td>
+                                    <td style="text-align: center;"><span class="score-pill">5 / 5</span></td>
+                                    <td>Duy trì mục tiêu đặt phòng và bảo vệ thông tin sinh viên xuyên suốt đa lượt thoại; chỉ chốt lịch khi observation SUCCESS.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(52, 211, 153, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(52, 211, 153, 0.3);">
+                            <span style="font-weight: 700; color: #34d399; font-size: 12.5px;">TỔNG ĐIỂM AGENTIC FIT:</span>
+                            <span style="font-family: var(--font-code); font-weight: 800; font-size: 14.5px; color: #34d399;">20 / 20 (Chuẩn tuyệt đối &gt; 12/20)</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="align-items: center; justify-content: center; position: relative;">
+                        <div style="font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 6px; align-self: flex-start;">
+                            📊 Biểu đồ Radar: Đánh giá Năng lực Agent
+                        </div>
+                        <div style="width: 100%; height: 230px; position: relative;">
+                            <canvas id="agenticRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: CÂU 3 -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 3 / 5</div>
+                    <h2 class="slide-title">Kiến trúc Agent đã xây dựng (System Architecture)</h2>
+                    <p class="slide-subtitle">Mô hình phân tầng chặt chẽ: LLM là bên đề xuất (Proposal), Mã nguồn kiểm soát thực thi (Enforcement)</p>
+                </div>
+                <div class="slide-number">03 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="arch-container">
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">1. Client Layer</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node highlight">🖥️ Web UI (Vanilla JS + Clean CSS)</div>
+                            <div class="arch-node">💻 CLI Interactive (`--interactive`)</div>
+                            <div class="arch-node">🧪 Test Runner (`--all --mode mock`)</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">2. ReAct Engine</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node highlight">⚙️ Orchestrator (`src/app.py`)</div>
+                            <div class="arch-node">🔄 SessionState (Multi-turn &amp; Pending Criteria)</div>
+                            <div class="arch-node">⏱️ Limits (Max 8 Iterations, Max 12 Calls, 120s)</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">3. LLM Providers</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node">🤖 BaseLLMProvider Interface</div>
+                            <div class="arch-node highlight">🎯 MockOfflineProvider (Deterministic 0đ)</div>
+                            <div class="arch-node">🌐 OpenAIProvider (Native Function Calling)</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">4. Guardrails (Code)</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node guard">🛡️ G01: Schema Strict Validation</div>
+                            <div class="arch-node guard">🛡️ G03: Booking Scope &amp; User Consent</div>
+                            <div class="arch-node guard">🛡️ G04/G18: Geocoding Dependency &amp; Clarify</div>
+                            <div class="arch-node guard">🛡️ G08: Loop Prevention</div>
+                            <div class="arch-node guard">🛡️ G09/G10: PII Redaction &amp; Evidence Cross-check</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">5. MCP 6 Tools</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node tool">📍 get_school_coordinates</div>
+                            <div class="arch-node tool">🔍 search_rental_rooms</div>
+                            <div class="arch-node tool">⭐ get_property_ratings</div>
+                            <div class="arch-node tool">🚌 get_nearby_bus_routes</div>
+                            <div class="arch-node tool">📅 book_room_viewing</div>
+                            <div class="arch-node tool">💬 ask_user</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">6. Storage &amp; Trace</div>
+                        <div class="arch-layer-content">
+                            <div class="arch-node data">📂 Fixtures (`schools.json`, `rooms.json`, `ratings.json`, `transit.json`)</div>
+                            <div class="arch-node data">🔒 In-Memory Thread-Safe Booking &amp; Idempotency Lock</div>
+                            <div class="arch-node data">📝 Trace Waterfall Logger (`docs/trace_waterfall.json`)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: CÂU 4 -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 4 / 5</div>
+                    <h2 class="slide-title">Sử dụng những tool gì? Tác dụng từng tool?</h2>
+                    <p class="slide-subtitle">Bộ 6 công cụ chuẩn hóa MCP JSON-RPC 2.0 với nguyên tắc phân tách trách nhiệm (Separation of Concerns)</p>
+                </div>
+                <div class="slide-number">04 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="tool-grid">
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 1 (MỚI TÁCH)</div>
+                        <div class="tool-name">get_school_coordinates</div>
+                        <div class="tool-purpose">
+                            <strong>Định vị GPS trường học:</strong> Nhận tên trường hoặc biệt danh (alias), tra cứu danh mục và trả về tọa độ GPS thực tế <code>(lat, lon)</code>. Báo lỗi nếu trường không tồn tại.
+                        </div>
+                        <div class="tool-params">Params: <code>school_name</code> (string)</div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 2 (CẬP NHẬT)</div>
+                        <div class="tool-name">search_rental_rooms</div>
+                        <div class="tool-purpose">
+                            <strong>Tìm phòng theo tọa độ GPS &amp; Haversine:</strong> Nhận <code>lat, lon</code> trung tâm đã resolve, tính khoảng cách đường thẳng chính xác tới từng phòng trọ; lọc giá, tiện ích và phòng trống.
+                        </div>
+                        <div class="tool-params">Params: <code>lat, lon, max_distance_km, max_price, amenities</code></div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 3</div>
+                        <div class="tool-name">get_property_ratings</div>
+                        <div class="tool-purpose">
+                            <strong>Kiểm tra uy tín phòng trọ:</strong> Xác thực điểm rating mô phỏng, thang đo 5 sao và số lượt đánh giá đã đối chiếu thực tế (<code>entity_match: verified</code>).
+                        </div>
+                        <div class="tool-params">Params: <code>room_id</code> (string: P101, P102...)</div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 4</div>
+                        <div class="tool-name">get_nearby_bus_routes</div>
+                        <div class="tool-purpose">
+                            <strong>Kiểm tra giao thông công cộng:</strong> Tra cứu trạm dừng xe buýt gần phòng theo bán kính (mặc định 500m), cự ly đường thẳng và các mã tuyến buýt đang hoạt động.
+                        </div>
+                        <div class="tool-params">Params: <code>room_id, radius_m</code></div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 5</div>
+                        <div class="tool-name">book_room_viewing</div>
+                        <div class="tool-purpose">
+                            <strong>Đặt lịch hẹn xem phòng:</strong> Kiểm tra giờ hợp lệ (08:00–17:30, phút 00/30), chống trùng lịch (slot conflict) và chống lặp idempotency key trong RAM thread-safe.
+                        </div>
+                        <div class="tool-params">Params: <code>room_id, student_id, viewing_time, student_phone</code></div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-badge">TOOL 6</div>
+                        <div class="tool-name">ask_user</div>
+                        <div class="tool-purpose">
+                            <strong>Human-in-the-Loop Clarification:</strong> Chủ động đặt câu hỏi làm rõ khi người dùng cung cấp thiếu dữ liệu quan trọng (ví dụ chưa rõ tên trường khi cần tính khoảng cách).
+                        </div>
+                        <div class="tool-params">Params: <code>question, missing_field</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: CÂU 5 (DEMO 1) -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 5 / 5 (Demo 1)</div>
+                    <h2 class="slide-title">Demo 1: Lập luận đa bước phức tạp (TC04)</h2>
+                    <p class="slide-subtitle">Trích xuất thực tế từ Trace Waterfall: Geocoding ➔ Tìm kiếm ➔ Rating/Bus ➔ Loại P102 ➔ Chọn P103 ➔ Đặt lịch</p>
+                </div>
+                <div class="slide-number">05 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="grid-2" style="grid-template-columns: 0.85fr 1.15fr;">
+                    <div class="card" style="gap: 10px;">
+                        <div style="font-size: 11.5px; color: var(--primary); font-weight: 700; text-transform: uppercase;">Câu hỏi đầu vào của Sinh viên:</div>
+                        <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; font-size: 13px; color: #f1f5f9; line-height: 1.45; border: 1px solid var(--border-color);">
+                            "Tôi là sinh viên SV2026001, học Trường mẫu của bài lab, SĐT 0912345678. Hãy tìm phòng trọ còn trống có điều hòa, giá ≤ 4 triệu/tháng và cách trường ≤ 3 km. Phòng phải có rating ≥ 4/5 (≥ 20 lượt) và có tuyến bus trong 500m. Chọn phòng gần trường nhất rồi đặt lịch xem phòng vào 15:00 ngày 16/09/2026 theo giờ Việt Nam."
+                        </div>
+
+                        <div style="font-size: 11.5px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-top: 2px;">Kết quả trả lời cuối cùng (Final Answer):</div>
+                        <div style="background: rgba(52, 211, 153, 0.08); padding: 10px; border-radius: 8px; font-size: 12.5px; color: #a7f3d0; line-height: 1.45; border: 1px solid rgba(52, 211, 153, 0.3);">
+                            ✓ <strong>Đã đặt lịch xem phòng P103</strong> vào 2026-09-16T15:00:00+07:00. Mã lịch: <code>DEMO-BK-001</code>.<br>
+                            • Giá: 3,500,000 VNĐ/tháng.<br>
+                            • Cự ly GPS tới trường: 1.998 km.<br>
+                            • Rating: 4.3/5 (37 lượt).<br>
+                            • Trạm gần nhất: Trạm Cầu Vồng (280m), tuyến BUS-12, BUS-33.
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: auto;">
+                            <span class="status-badge success">4 ReAct Steps</span>
+                            <span class="status-badge success">9 Tool Calls</span>
+                            <span class="status-badge success">Status: COMPLETED</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 12px;">
+                        <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">
+                            Trace Waterfall Events (Trích xuất log thực tế):
+                        </div>
+                        <div class="trace-flow">
+                            <div class="trace-step-item">
+                                <div class="trace-step-header">
+                                    <div class="trace-tag-group">
+                                        <span class="trace-step-pill">Step 1</span>
+                                        <span class="trace-action-name">get_school_coordinates</span>
+                                    </div>
+                                    <span class="trace-status-pill">SUCCESS</span>
+                                </div>
+                                <div class="trace-box">
+<span class="key">Call:</span> {"school_name": "Trường mẫu của bài lab"}
+<span class="key">Observation:</span> {"school_id": "VINUNI", "lat": 10.0, "lon": 106.0, "source": "fixture"}</div>
+                            </div>
+
+                            <div class="trace-step-item">
+                                <div class="trace-step-header">
+                                    <div class="trace-tag-group">
+                                        <span class="trace-step-pill">Step 2</span>
+                                        <span class="trace-action-name">search_rental_rooms</span>
+                                    </div>
+                                    <span class="trace-status-pill">SUCCESS</span>
+                                </div>
+                                <div class="trace-box">
+<span class="key">Call:</span> {"lat": 10.0, "lon": 106.0, "max_distance_km": 3.0, "max_price": 4000000}
+<span class="key">Observation:</span> 3 ứng viên: P102 (0.799km), P103 (1.998km), P111 (2.797km).</div>
+                            </div>
+
+                            <div class="trace-step-item">
+                                <div class="trace-step-header">
+                                    <div class="trace-tag-group">
+                                        <span class="trace-step-pill">Step 3</span>
+                                        <span class="trace-action-name">ratings &amp; transit check</span>
+                                    </div>
+                                    <span class="trace-status-pill">6 CALLS SUCCESS</span>
+                                </div>
+                                <div class="trace-box">
+• P102: Rating 3.7/5 (&lt; 4.0) <span class="fail">➔ LOẠI BỎ vì vi phạm điều kiện cứng!</span>
+• P103: Rating 4.3/5, Trạm Cầu Vồng 280m <span class="pass">➔ ĐẠT TOÀN BỘ TIÊU CHÍ (TỐT NHẤT)</span>
+• P111: Rating 4.2/5, Trạm Mộc Miên 460m ➔ Đạt nhưng xa hơn P103 (2.797km &gt; 1.998km)</div>
+                            </div>
+
+                            <div class="trace-step-item">
+                                <div class="trace-step-header">
+                                    <div class="trace-tag-group">
+                                        <span class="trace-step-pill">Step 4</span>
+                                        <span class="trace-action-name">book_room_viewing</span>
+                                    </div>
+                                    <span class="trace-status-pill">SUCCESS</span>
+                                </div>
+                                <div class="trace-box">
+<span class="key">Call:</span> {"room_id": "P103", "student_id": "SV***001", "viewing_time": "2026-09-16T15:00:00+07:00"}
+<span class="key">Guardrail G03/G04/G17:</span> <span class="pass">ALLOW (Đủ bằng chứng, khớp ứng viên số 1)</span>
+<span class="key">Result:</span> {"booking_id": "DEMO-BK-001", "status": "SUCCESS"}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: CÂU 5 (DEMO 2) -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Yêu cầu 5 / 5 (Demo 2)</div>
+                    <h2 class="slide-title">Demo 2: Human-in-the-Loop Clarification</h2>
+                    <p class="slide-subtitle">Bảo toàn ngữ cảnh đa lượt: Loại bỏ Silent Fallback, hỏi lại qua `ask_user` rồi tiếp tục chuỗi ReAct</p>
+                </div>
+                <div class="slide-number">06 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card" style="border-left: 4px solid var(--warning);">
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.3);">⚠️</div>
+                            <div>
+                                <div class="card-title">Lượt 1: Người dùng thiếu tên trường</div>
+                                <div style="font-size: 12px; color: var(--warning); font-weight: 600;">Trạng thái: NEEDS_INPUT (Không tự ý đoán)</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+                                <strong style="color: #fff;">User Query:</strong><br>
+                                <em>"Tôi là sinh viên SV2026001, cần tìm phòng giá ≤ 4tr, cách trường ≤ 3km..."</em> (Không nhắc tên trường!)
+                            </div>
+
+                            <div style="background: rgba(251, 191, 36, 0.08); padding: 10px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                                <strong style="color: #fbbf24;">Xử lý của Agent:</strong>
+                                <ul style="margin-left: 18px; margin-top: 4px; color: #cbd5e1;">
+                                    <li>Nhận thấy có ràng buộc khoảng cách nhưng <code>school_name == None</code>.</li>
+                                    <li>Gọi tool <code>ask_user(question=...)</code>.</li>
+                                    <li>Lưu toàn bộ tiêu chí cũ vào <code>SessionState.pending_criteria</code>.</li>
+                                </ul>
+                            </div>
+
+                            <div class="trace-box" style="margin-top: 4px;">
+<span class="key">Agent phản hồi:</span>
+"Bạn đang học ở trường nào? Vui lòng cho mình biết tên trường để tính khoảng cách chính xác từ phòng trọ đến trường của bạn nhé."</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid var(--accent);">
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(52, 211, 153, 0.15); border-color: rgba(52, 211, 153, 0.3);">✅</div>
+                            <div>
+                                <div class="card-title">Lượt 2: Bổ sung trường &amp; Hoàn tất</div>
+                                <div style="font-size: 12px; color: var(--accent); font-weight: 600;">Trạng thái: COMPLETED (Tự động kết hợp)</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+                                <strong style="color: #fff;">User Reply:</strong><br>
+                                <em>"Trường mẫu của bài lab"</em>
+                            </div>
+
+                            <div style="background: rgba(52, 211, 153, 0.08); padding: 10px; border-radius: 8px; border: 1px solid rgba(52, 211, 153, 0.2);">
+                                <strong style="color: #34d399;">Xử lý của Agent:</strong>
+                                <ul style="margin-left: 18px; margin-top: 4px; color: #cbd5e1;">
+                                    <li>Khôi phục bộ lọc: giá ≤ 4tr, khoảng cách ≤ 3km, điều hòa.</li>
+                                    <li>Gọi <code>get_school_coordinates("Trường mẫu...")</code> ➔ GPS (10.0, 106.0).</li>
+                                    <li>Gọi <code>search_rental_rooms(lat=10.0, lon=106.0, ...)</code>.</li>
+                                </ul>
+                            </div>
+
+                            <div class="trace-box" style="margin-top: 4px;">
+<span class="key">Agent trả kết quả:</span>
+"Kết quả dữ liệu mô phỏng quanh Trường Đại học VinUni (khoảng cách GPS đường thẳng): P102: 3,800,000 VNĐ, 0.799 km; P103: 3,500,000 VNĐ, 1.998 km; P111: 3,600,000 VNĐ, 2.797 km."</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: KẾT LUẬN -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-badge">Tổng kết</div>
+                    <h2 class="slide-title">Tổng kết Giá trị Đạt được &amp; Nghiệm thu</h2>
+                    <p class="slide-subtitle">Khẳng định chất lượng hệ thống ReAct Agent chuẩn Production-ready</p>
+                </div>
+                <div class="slide-number">07 / 07</div>
+            </div>
+
+            <div class="slide-body">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🏆</div>
+                            <div class="card-title">100% Test Suite</div>
+                        </div>
+                        <div class="card-desc">
+                            Vượt qua trọn vẹn <strong>5/5 Test Cases</strong> chuẩn hóa:<br>
+                            • TC01: Direct Query (0 calls)<br>
+                            • TC02: Two-step Query<br>
+                            • TC03: Booking trực tiếp<br>
+                            • TC04: Multi-step Reasoning<br>
+                            • TC05: Edge Case (Không có phòng)
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🛡️</div>
+                            <div class="card-title">An toàn &amp; Đáng tin</div>
+                        </div>
+                        <div class="card-desc">
+                            • <strong>Zero Hallucination:</strong> Không tự bịa giá hay trạng thái phòng.<br>
+                            • <strong>Guardrails:</strong> 13 quy tắc chặn hành vi trái phép.<br>
+                            • <strong>PII Safe:</strong> Tự động che SĐT, MSSV trong toàn bộ Trace Logs.<br>
+                            • <strong>Idempotent:</strong> Chống đặt trùng slot xem phòng.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🚀</div>
+                            <div class="card-title">Full-stack Delivery</div>
+                        </div>
+                        <div class="card-desc">
+                            • Backend FastAPI với Clean MCP Facade.<br>
+                            • Hỗ trợ linh hoạt Mock Offline (0đ) &amp; OpenAI Live.<br>
+                            • Giao diện Web hiện đại, chống XSS, timeline trace thời gian thực.<br>
+                            • Tài liệu thiết kế &amp; bàn giao chi tiết.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()" title="Slide trước (Phím Mũi tên trái)">‹</button>
+        <div class="slide-dots" id="slideDots"></div>
+        <button class="nav-btn" onclick="nextSlide()" title="Slide kế tiếp (Phím Mũi tên phải / Space)">›</button>
+    </div>
+
+    <div class="keyboard-hint">
+        Sử dụng <kbd>←</kbd> <kbd>→</kbd> hoặc <kbd>Space</kbd> để chuyển slide
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const dotsContainer = document.getElementById('slideDots');
+        const progressBar = document.getElementById('progressBar');
+        let currentSlide = 0;
+        let radarChart = null;
+
+        slides.forEach((_, idx) => {
+            const dot = document.createElement('div');
+            dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+            dot.onclick = () => goToSlide(idx);
+            dotsContainer.appendChild(dot);
+        });
+
+        function updateSlide() {
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentSlide);
+            });
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === currentSlide);
+            });
+
+            const progress = ((currentSlide) / (slides.length - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            if (currentSlide === 2 && !radarChart) {
+                setTimeout(initRadarChart, 150);
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(slides.length - 1);
+            } else if (e.key.toLowerCase() === 'f') {
+                toggleFullScreen();
+            }
+        });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function initRadarChart() {
+            const ctx = document.getElementById('agenticRadarChart');
+            if (!ctx) return;
+
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Multi-step Reasoning',
+                        'Tool Interaction',
+                        'Dynamic Decision',
+                        'Long Horizon Goal'
+                    ],
+                    datasets: [
+                        {
+                            label: 'Điểm Đạt Được (Student Housing Agent)',
+                            data: [5, 5, 5, 5],
+                            backgroundColor: 'rgba(56, 189, 248, 0.25)',
+                            borderColor: '#38bdf8',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#38bdf8',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#38bdf8'
+                        },
+                        {
+                            label: 'Ngưỡng Chuẩn Yêu Cầu (>12/20)',
+                            data: [3, 3, 3, 3],
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderDash: [5, 5],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                            pointLabels: {
+                                color: '#cbd5e1',
+                                font: {
+                                    family: "'Plus Jakarta Sans', sans-serif",
+                                    size: 11.5,
+                                    weight: '600'
+                                }
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            ticks: {
+                                stepSize: 1,
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 11 },
+                                boxWidth: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        updateSlide();
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "fixture_version": "fixture-v2",
+  "data_source": "fixture",
+  "transit": {
+    "P101": {"coverage": "supported", "stop_id": "STOP-01", "name": "Trạm Đường Số 1", "distance_m": 420, "routes": ["BUS-08"]},
+    "P102": {"coverage": "supported", "stop_id": "STOP-02", "name": "Trạm Ban Mai", "distance_m": 180, "routes": ["BUS-05"]},
+    "P103": {"coverage": "supported", "stop_id": "STOP-03", "name": "Trạm Cầu Vồng", "distance_m": 280, "routes": ["BUS-12", "BUS-33"]},
+    "P104": {"coverage": "unknown"},
+    "P105": {"coverage": "supported", "stop_id": "STOP-05", "name": "Trạm Công Viên", "distance_m": 760, "routes": ["BUS-02"]},
+    "P106": {"coverage": "supported", "stop_id": "STOP-06", "name": "Trạm Gió Mát", "distance_m": 350, "routes": ["BUS-18"]},
+    "P107": {"coverage": "supported", "stop_id": "STOP-07", "name": "Trạm Hoa Nắng", "distance_m": 240, "routes": ["BUS-05", "BUS-21"]},
+    "P108": {"coverage": "supported", "stop_id": "STOP-08", "name": "Trạm Ích An", "distance_m": 90, "routes": ["BUS-03"]},
+    "P109": {"coverage": "supported", "stop_id": "STOP-09", "name": "Trạm Ký Ức", "distance_m": 510, "routes": ["BUS-15"]},
+    "P110": {"coverage": "unsupported"},
+    "P111": {"coverage": "supported", "stop_id": "STOP-11", "name": "Trạm Mộc Miên", "distance_m": 460, "routes": ["BUS-12"]},
+    "P112": {"coverage": "unknown"}
+  }
+}

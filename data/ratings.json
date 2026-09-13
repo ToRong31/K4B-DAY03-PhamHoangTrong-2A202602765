@@ -1,0 +1,18 @@
+{
+  "fixture_version": "fixture-v2",
+  "data_source": "fixture",
+  "ratings": {
+    "P101": {"rating": 4.1, "rating_scale": 5, "review_count": 26},
+    "P102": {"rating": 3.7, "rating_scale": 5, "review_count": 50},
+    "P103": {"rating": 4.3, "rating_scale": 5, "review_count": 37},
+    "P104": null,
+    "P105": {"rating": 4.5, "rating_scale": 5, "review_count": 11},
+    "P106": {"rating": 3.9, "rating_scale": 5, "review_count": 18},
+    "P107": {"rating": 4.6, "rating_scale": 5, "review_count": 72},
+    "P108": {"rating": 4.8, "rating_scale": 5, "review_count": 104},
+    "P109": {"rating": 4.0, "rating_scale": 5, "review_count": 9},
+    "P110": null,
+    "P111": {"rating": 4.2, "rating_scale": 5, "review_count": 31},
+    "P112": {"rating": 3.5, "rating_scale": 5, "review_count": 14}
+  }
+}
